@@ -1,7 +1,7 @@
 $('.details-page').live("pageshow", function() {
     var f = new Date();
     map = L.mapbox.map('map').setView([-12.047816, -77.062203],
-        14);
+            14);
     L.mapbox.tileLayer('armandoperu.hh42cm09', {
         attribution: 'Powered by <a target="_blank" href="http://geosolution.pe/">Geosolution ' + f.getFullYear() + '</a>'
     }).addTo(map);
@@ -14,21 +14,40 @@ $('.details-page').live("pageshow", function() {
 
     });
 
+    if (!navigator.geolocation) {
+        geolocate.innerHTML = 'geolocation is not available';
+    } else {
+        geolocate.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            map.locate();
+        };
+    }
+
+    map.on('locationfound', function(e) {
+        map.fitBounds(e.bounds);
+        var geojson = {
+            type: "Feature",
+            geometry: {
+                type: "Point",
+                coordinates: [e.latlng.lng, e.latlng.lat]
+            },
+            properties: {
+                "title": "Aqui Estoy",
+                'marker-color': '#3B5998',
+                "marker-symbol": "pitch",
+                "marker-size": "small",
+            }
+        };
+        var markerLayer = L.mapbox.markerLayer(geojson).addTo(map);
+        map.zoom(18);
+
+    });
+
 
 
 });
 
-
-
-function popup() {
-    alert('hola');
-    $('element_to_pop_up').bPopup({
-        easing: 'easeOutBack', //uses jQuery easing plugin
-        speed: 450,
-        transition: 'slideDown'
-    });
-    alert('chau');
-}
 
 function onNorte() {
     var position = L.latLng(-11.781168, -77.15816);
@@ -45,53 +64,29 @@ function onEste() {
     map.panTo(position);
 }
 
-function onRefresh() {
+function mostrarMapa(dat) {
+    console.log(dat);
+    var marker;
 
-    $.ajax({
-        type: "GET",
-        url: "http://geosolution.pe/demo/GS_RutasLima/?method=gstrafico&file=44",
-        async: true,
-        success: function(datos) {
-            conta = conta + 1;
-            var dataJson = eval(datos);
-            var trafico;
-
-            for (var i in dataJson) {
-
-                trafico = parseInt(dataJson[i].gs_codTrafico);
-                var puntos = [
-                    [parseFloat(dataJson[i].gs_CX), parseFloat(dataJson[i].gs_CY)],
-                    [parseFloat(dataJson[i].gs_CX1), parseFloat(dataJson[i].gs_CY1)]
-                ];
-                if (trafico === 1) {
-                    if (conta !== 1) {
-                        map.removeLayer(lineas);
-                    }
-                    lineas = L.polyline(puntos, {
-                        color: 'green',
-                        opacity: 0.5
-                    }).addTo(map);
-                } else if (trafico === 2) {
-                    if (conta !== 1) {
-                        map.removeLayer(lineas);
-                    }
-                    lineas = L.polyline(puntos, {
-                        color: 'yellow',
-                        opacity: 0.5
-                    }).addTo(map);
-                } else {
-                    if (conta !== 1) {
-                        map.removeLayer(lineas);
-                    }
-                    lineas = L.polyline(puntos, {
-                        color: 'red',
-                        opacity: 0.5
-                    }).addTo(map);
-                }
-            }
-        },
-        error: function(obj, error, objError) {
-            //avisar que ocurrió un error
+    $.each(incidencias.features, function(k, v) {
+        if (v.properties.id === dat) {
+            marker = v;
         }
     });
+    console.log(marker)
+    var geojson = {
+        type: "Feature",
+        geometry: {
+            type: "Point",
+            coordinates: [-77.5, -12.9]
+        },
+        properties: {
+            "title": "Aqui Estoy",
+            'marker-color': '#3B5998',
+            "marker-symbol": "pitch",
+            "marker-size": "small",
+        }
+    };
+    L.mapbox.markerLayer(geojson).addTo(map);
 }
+;
